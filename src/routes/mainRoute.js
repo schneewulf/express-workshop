@@ -1,13 +1,13 @@
 // @flow
 
 import {Router} from 'express';
-import {signupController} from '../controllers/authController';
+import {signupController, loginController} from '../controllers/authController';
 
 let mainRoute = Router();
 
 // auth
 mainRoute.post('/auth/signup', signupController);
-// mainRoute.post('/auth/login', /*login controller*/)
+mainRoute.post('/auth/login', loginController);
 //
 // // users
 // mainRoute.get('/users', /* users contoller*/);

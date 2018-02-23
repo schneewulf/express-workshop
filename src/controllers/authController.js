@@ -1,8 +1,11 @@
 // @flow
 import type {$Request as Req, $Response as Res} from 'express';
-import bcrypt from 'bcrypt';
+import {
+  generatedHashedPassword,
+  isPasswordSame,
+  generateFreshToken,
+} from '../globals/helpers';
 import User from '../models/UserModel';
-import jwt from 'jsonwebtoken';
 
 type ReqBody = {
   name: string,
@@ -34,22 +37,15 @@ async function signupController(req: ExtReq, res: Res) {
   } else {
     try {
       // We can use anything!
-      let salt = bcrypt.genSaltSync(10);
-      let hashedPassword = bcrypt.hashSync(password, salt);
-      let users = await User.create({
+      let hashedPassword = generatedHashedPassword(password);
+      let user = await User.create({
         name,
         email,
         password: hashedPassword,
       });
       res.status(200).json({
-        token: jwt.sign({id: users._id}, 'shhhhh', {expiresIn: 100000}),
+        token: generateFreshToken({id: user._id}),
       });
-      // res.status(200).json({
-      //   status: 'OK',
-      //   message: req.body,
-      //   password: hashedPassword,
-      //   token,
-      // });
     } catch (err) {
       res.status(500).json({
         status: 'ERROR',
@@ -59,4 +55,36 @@ async function signupController(req: ExtReq, res: Res) {
   }
 }
 
-export {signupController};
+async function loginController(req: ExtReq, res: Res) {
+  let {email, password} = req.body;
+  if (email === undefined || password === undefined) {
+    res.status(400).json({
+      status: 'ERROR',
+      message: 'Either password or email is not sent to the server',
+    });
+  } else {
+    try {
+      let user = await User.findOne({email});
+      let isValidate = isPasswordSame(password, user.password);
+      if (!isValidate) {
+        res.status(401).json({
+          status: 'ERROR',
+          message: 'Email or Password does not match',
+        });
+      } else {
+        let token = generateFreshToken({id: user._id});
+        res.status(200).json({
+          status: 'OK',
+          token,
+        });
+      }
+    } catch (err) {
+      res.status(500).json({
+        status: 'ERROR',
+        message: 'server error',
+      });
+    }
+  }
+}
+
+export {signupController, loginController};
