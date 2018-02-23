@@ -1,8 +1,9 @@
 // @flow
 import express from 'express';
+import mongoose from 'mongoose';
 
 import mainRoute from './routes/mainRoute';
-import {PORT} from './globals/config';
+import {PORT, CONNECTION_STRING} from './globals/config';
 
 import bodyParser from 'body-parser';
 
@@ -10,6 +11,10 @@ let app = express();
 
 // parse application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({extended: false}));
+
+mongoose.connect(CONNECTION_STRING);
+
+mongoose.Promise = global.Promise;
 
 // parse application/json
 app.use(bodyParser.json());

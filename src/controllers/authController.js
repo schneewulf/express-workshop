@@ -1,6 +1,8 @@
 // @flow
 import type {$Request as Req, $Response as Res} from 'express';
 import bcrypt from 'bcrypt';
+import User from '../models/UserModel';
+import jwt from 'jsonwebtoken';
 
 type ReqBody = {
   name: string,
@@ -31,13 +33,23 @@ async function signupController(req: ExtReq, res: Res) {
     });
   } else {
     try {
+      // We can use anything!
       let salt = bcrypt.genSaltSync(10);
       let hashedPassword = bcrypt.hashSync(password, salt);
-      res.status(200).json({
-        status: 'OK',
-        message: req.body,
+      let users = await User.create({
+        name,
+        email,
         password: hashedPassword,
       });
+      res.status(200).json({
+        token: jwt.sign({id: users._id}, 'shhhhh', {expiresIn: 100000}),
+      });
+      // res.status(200).json({
+      //   status: 'OK',
+      //   message: req.body,
+      //   password: hashedPassword,
+      //   token,
+      // });
     } catch (err) {
       res.status(500).json({
         status: 'ERROR',
